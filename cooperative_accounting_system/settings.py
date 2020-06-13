@@ -75,8 +75,12 @@ WSGI_APPLICATION = 'cooperative_accounting_system.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'co-system',
+        'USER': 'hawk',
+        'PASSWORD': 'hawk',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
