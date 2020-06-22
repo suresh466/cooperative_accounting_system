@@ -1,5 +1,30 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<p>testing data-entry view</p>
+
+<form method="POST" id="dataEntryForm" data-secondary-accounts-url="{% url 'data_entry:ajax_load_secondary_accounts' %}">
+	{% csrf_token %}
+	{{ form.as_p }}
+	<button type="submit">Add</button>
+</form>
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script> //GET RID OF JQUERY ASAP
+    $("#id_main_account").change(function () {
+      var url = $("#dataEntryForm").attr("data-secondary-accounts-url");  // get the url of the `load_secondary_accounts` view
+      var mainAccountId = $(this).val();  // get the selected main_account ID from the HTML input
+
+      $.ajax({                       // initialize an AJAX request
+        url: url,                    // set the url of the request (= localhost:8000/hr/ajax/load-secondary_account/)
+        data: {
+          'main_account': mainAccountId       // add the main_account id to the GET parameters
+        },
+        success: function (data) {   // `data` is the return of the `load_secondary_accounts` view function
+          $("#id_secondary_account").html(data);  // replace the contents of the secondary_account input with the data that came from the server
+        }
+      });
+
+    });
+  </script>
+
 {% endblock content %}
