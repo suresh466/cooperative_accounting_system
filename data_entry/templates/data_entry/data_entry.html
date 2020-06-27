@@ -2,10 +2,15 @@
 
 {% block content %}
 
-<form method="POST" id="dataEntryForm" data-secondary-accounts-url="{% url 'data_entry:ajax_load_secondary_accounts' %}">
+<form method="POST" id="dataEntryForm" data-secondary-accounts-url="{% url 'data_entry:ajax_load_secondary_accounts' %}" get-entry-url="{% url 'data_entry:get_entry' %}">
 	{% csrf_token %}
 	{{ form.as_p }}
-	<button type="submit">Add</button>
+	<button type="submit" name="add">Add</button>
+</form>
+<br>
+<form method="POST" id="entryBundleForm">
+	{% csrf_token %}
+	<button type="submit" name="done">Done</button>
 </form>
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
@@ -17,7 +22,7 @@
       $.ajax({                       // initialize an AJAX request
         url: url,                    // set the url of the request (= localhost:8000/hr/ajax/load-secondary_account/)
         data: {
-          'main_account': mainAccountId       // add the main_account id to the GET parameters
+          "main_account": mainAccountId       // add the main_account id to the GET parameters
         },
         success: function (data) {   // `data` is the return of the `load_secondary_accounts` view function
           $("#id_secondary_account").html(data);  // replace the contents of the secondary_account input with the data that came from the server
@@ -25,6 +30,37 @@
       });
 
     });
+  </script>
+
+  <script type="text/javascript">
+	  $(document).on("submit", "#dataEntryForm", function(e){
+		  e.preventDefault(); //prevent default browser behaviour for form submission(reloading)
+
+		  var url = $("#dataEntryForm").attr("get-entry-url");
+		  var main_account = $("#id_main_account").val();
+		  var secondary_account = $("#id_secondary_account").val();
+		  var personal_account = $("#id_personal_account").val();
+		  var amount = $("#id_amount").val();
+		  var csrfmiddlewaretoken = $("input[name=csrfmiddlewaretoken]").val();
+
+		  $.ajax({
+			  type:"POST",
+			  url:url,
+			  data: {
+				  "main_account": main_account,
+				  "secondary_account": secondary_account,
+				  "personal_account": personal_account,
+				  "amount": amount,
+				  "csrfmiddlewaretoken": csrfmiddlewaretoken,
+			  },
+			  success:function(data){
+				  $("#id_main_account").val("");
+				  $("#id_secondary_account").val("");
+				  $("#id_personal_account").val("");
+				  $("#id_amount").val("");
+			  }
+		  });
+	  });
   </script>
 
 {% endblock content %}

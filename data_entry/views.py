@@ -1,22 +1,16 @@
 from django.shortcuts import render
 from .forms import DataEntryForm
 from accounts.models import SecondaryAccount
-
+from django.http import HttpResponse
 # Create your views here.
 
 def data_entry(request):
     template = 'data_entry/data_entry.html'
 
-    if request.method == 'POST':
-        form = DataEntryForm(request.POST)
-        if form.is_valid():
-            entry = form.save(commit=False)
-            print(entry.main_account)
-            print(entry.secondary_account)
-            print(entry.personal_account)
-            print(entry.amount)
-    else:
-        form = DataEntryForm
+    if 'done' in request.POST:
+        print(".........indide done") #sanity check
+
+    form = DataEntryForm()
 
     context = {
             'form': form,
@@ -35,3 +29,17 @@ def load_secondary_accounts(request):
             }
 
     return render(request, template, context)
+
+def get_entry(request):
+
+    main_account = request.POST['main_account']
+    secondary_account = request.POST['secondary_account']
+    personal_account = request.POST.get('personal_account')
+    amount = request.POST['amount']
+
+    print(main_account)
+    print(secondary_account)
+    print(personal_account)
+    print(amount)
+
+    return HttpResponse('')
