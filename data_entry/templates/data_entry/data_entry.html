@@ -2,6 +2,10 @@
 
 {% block content %}
 
+<h3>Entries</h3>
+<ul class="entries">
+</ul>
+
 <form method="POST" id="dataEntryForm" data-secondary-accounts-url="{% url 'data_entry:ajax_load_secondary_accounts' %}" get-entry-url="{% url 'data_entry:get_entry' %}">
 	{% csrf_token %}
 	{{ form.as_p }}
@@ -53,11 +57,13 @@
 				  "amount": amount,
 				  "csrfmiddlewaretoken": csrfmiddlewaretoken,
 			  },
-			  success:function(data){
+			  success:function(session_entries){
 				  $("#id_main_account").val("");
 				  $("#id_secondary_account").val("");
 				  $("#id_personal_account").val("");
 				  $("#id_amount").val("");
+				  console.log(session_entries);
+				  $(".entries").prepend("<li>" + "main_ac: " + session_entries.ma +  " | sec_ac: " + session_entries.sa + " | pers_ac: " + session_entries.pa + " | amount: " + session_entries.a + "</li>")
 			  }
 		  });
 	  });

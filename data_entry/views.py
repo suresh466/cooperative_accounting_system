@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from .forms import DataEntryForm
 from accounts.models import (MainAccount, SecondaryAccount,
         PersonalAccount)
-from django.http import HttpResponse
+from django.http import JsonResponse
 from .models import EntryBundle, Entry
 # Create your views here.
 
@@ -20,8 +20,8 @@ def data_entry(request):
             pa_pk = entry['pa']
 
             ma = MainAccount.objects.get(pk=ma_pk)
-            sa = SecondaryAccount.objects.get(pk=ma_pk)
-            pa = PersonalAccount.objects.get(pk=ma_pk)
+            sa = SecondaryAccount.objects.get(pk=sa_pk)
+            pa = PersonalAccount.objects.get(pk=pa_pk)
             a = entry['a']
 
             entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_bundle_code=entrybundle, code=0)
@@ -54,13 +54,21 @@ def load_secondary_accounts(request):
 
 def get_entry(request):
 
-    main_account = request.POST['main_account']
-    secondary_account = request.POST['secondary_account']
-    personal_account = request.POST.get('personal_account')
+    main_account_pk = request.POST['main_account']
+    secondary_account_pk = request.POST['secondary_account']
+    personal_account_pk = request.POST.get('personal_account')
     amount = request.POST['amount']
 
-    entry = {'ma': main_account, 'sa': secondary_account, 'pa': personal_account, 'a': amount}
+    entry = {'ma': main_account_pk, 'sa': secondary_account_pk, 'pa': personal_account_pk, 'a': amount}
     request.session['entries'].append(entry)
     request.session.modified = True
 
-    return HttpResponse('')
+    ma = MainAccount.objects.get(pk=main_account_pk)
+    sa = SecondaryAccount.objects.get(pk=secondary_account_pk)
+    pa = PersonalAccount.objects.get(pk=personal_account_pk)
+
+    entry_json = {'ma': ma.name, 'sa': sa.name, 'pa': pa.name, 'a': amount}
+
+    session_entries = entry_json
+
+    return JsonResponse(session_entries, safe=False)
