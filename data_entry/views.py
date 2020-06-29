@@ -1,14 +1,36 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .forms import DataEntryForm
-from accounts.models import SecondaryAccount
+from accounts.models import (MainAccount, SecondaryAccount,
+        PersonalAccount)
 from django.http import HttpResponse
+from .models import EntryBundle, Entry
 # Create your views here.
 
 def data_entry(request):
     template = 'data_entry/data_entry.html'
 
+    entrybundle = EntryBundle(code= 0)
+
     if 'done' in request.POST:
-        print(".........indide done") #sanity check
+        if request.session['entries']:
+            entrybundle.save()
+        for entry in request.session['entries']:
+            ma_pk = entry['ma']
+            sa_pk = entry['sa']
+            pa_pk = entry['pa']
+
+            ma = MainAccount.objects.get(pk=ma_pk)
+            sa = SecondaryAccount.objects.get(pk=ma_pk)
+            pa = PersonalAccount.objects.get(pk=ma_pk)
+            a = entry['a']
+
+            entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_bundle_code=entrybundle, code=0)
+            entry.save()
+
+        del request.session['entries']
+        return redirect('data_entry:data_entry')
+
+    request.session['entries'] = [] #create or overwrite if already exists
 
     form = DataEntryForm()
 
@@ -37,9 +59,8 @@ def get_entry(request):
     personal_account = request.POST.get('personal_account')
     amount = request.POST['amount']
 
-    print(main_account)
-    print(secondary_account)
-    print(personal_account)
-    print(amount)
+    entry = {'ma': main_account, 'sa': secondary_account, 'pa': personal_account, 'a': amount}
+    request.session['entries'].append(entry)
+    request.session.modified = True
 
     return HttpResponse('')
