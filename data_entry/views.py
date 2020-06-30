@@ -16,20 +16,22 @@ def data_entry(request):
         if 'done' in request.POST:
             if request.session['entries']:
                 entrybundle.save()
-            for entry in request.session['entries']:
-                ma_pk = entry['ma']
-                sa_pk = entry['sa']
-                pa_pk = entry['pa']
+                counter = 0
+                for entry in request.session['entries']:
+                    ma_pk = entry['ma']
+                    sa_pk = entry['sa']
+                    pa_pk = entry['pa']
 
-                ma = MainAccount.objects.get(pk=ma_pk)
-                sa = SecondaryAccount.objects.get(pk=sa_pk)
-                pa = PersonalAccount.objects.get(pk=pa_pk)
-                a = entry['a']
+                    ma = MainAccount.objects.get(pk=ma_pk)
+                    sa = SecondaryAccount.objects.get(pk=sa_pk)
+                    pa = PersonalAccount.objects.get(pk=pa_pk)
+                    a = entry['a']
+                    counter += 1
 
-                entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_bundle=entrybundle, code=0)
-                entry.save()
+                    entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_bundle=entrybundle, count=counter)
+                    entry.save()
 
-            del request.session['entries']
+                del request.session['entries']
 
         elif 'discard' in request.POST:
             if request.session['entries']:

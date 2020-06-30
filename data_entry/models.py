@@ -13,7 +13,7 @@ class EntryBundle(models.Model):
 class Entry(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
-    code = models.PositiveIntegerField()
+    count = models.PositiveIntegerField()
     entry_bundle = models.ForeignKey(EntryBundle, on_delete=models.CASCADE)
     main_account = models.ForeignKey(MainAccount, on_delete=models.DO_NOTHING)
     secondary_account = models.ForeignKey(SecondaryAccount, on_delete=models.DO_NOTHING)
