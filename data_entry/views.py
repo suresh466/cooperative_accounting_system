@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from .forms import DataEntryForm
 from accounts.models import (MainAccount, SecondaryAccount,
         PersonalAccount)
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from .models import EntryBundle, Entry
 # Create your views here.
 
@@ -72,3 +72,9 @@ def get_entry(request):
     session_entries = entry_json
 
     return JsonResponse(session_entries, safe=False)
+
+def discard_session_entry(request):
+    del request.session['entries'][-1]
+    request.session.modified = "True"
+
+    return HttpResponse('')

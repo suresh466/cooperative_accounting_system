@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
+<button id="discard_latest_session_entry" discard-session-entry-url="{% url 'data_entry:discard_session_entry' %}">Remove latest entry</button>
 <h3>Entries</h3>
 <ul class="entries">
 </ul>
@@ -62,11 +62,29 @@
 				  $("#id_secondary_account").val("");
 				  $("#id_personal_account").val("");
 				  $("#id_amount").val("");
-				  console.log(session_entries);
 				  $(".entries").prepend("<li>" + "main_ac: " + session_entries.ma +  " | sec_ac: " + session_entries.sa + " | pers_ac: " + session_entries.pa + " | amount: " + session_entries.a + "</li>")
 			  }
 		  });
 	  });
   </script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        $("#discard_latest_session_entry").click(function(){
+		  var url = $("#discard_latest_session_entry").attr("discard-session-entry-url");
+
+            $.ajax({
+                url: url,
+                success: function(data) {
+					$(".entries").find(":first").remove()
+					alert("Latest entry Discarded")
+
+                },
+				error: function(data){
+					alert("No entry to delete")
+				}
+            });
+   });
+});
+</script>
 
 {% endblock content %}
