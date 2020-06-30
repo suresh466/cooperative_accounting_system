@@ -26,7 +26,7 @@ def data_entry(request):
                 pa = PersonalAccount.objects.get(pk=pa_pk)
                 a = entry['a']
 
-                entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_bundle_code=entrybundle, code=0)
+                entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_bundle=entrybundle, code=0)
                 entry.save()
 
             del request.session['entries']
