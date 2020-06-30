@@ -9,7 +9,7 @@ from .models import EntryBundle, Entry
 def data_entry(request):
     template = 'data_entry/data_entry.html'
 
-    entrybundle = EntryBundle(code= 0)
+    entrybundle = EntryBundle()
 
     if request.method == "POST":
 

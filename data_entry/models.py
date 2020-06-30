@@ -6,7 +6,6 @@ from accounts.models import (MainAccount, SecondaryAccount,
 class EntryBundle(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
-    code = models.PositiveIntegerField()
 
     def __str__(self):
         return self.date_created
