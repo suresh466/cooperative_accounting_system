@@ -11,23 +11,32 @@ def data_entry(request):
 
     entrybundle = EntryBundle(code= 0)
 
-    if 'done' in request.POST:
-        if request.session['entries']:
-            entrybundle.save()
-        for entry in request.session['entries']:
-            ma_pk = entry['ma']
-            sa_pk = entry['sa']
-            pa_pk = entry['pa']
+    if request.method == "POST":
 
-            ma = MainAccount.objects.get(pk=ma_pk)
-            sa = SecondaryAccount.objects.get(pk=sa_pk)
-            pa = PersonalAccount.objects.get(pk=pa_pk)
-            a = entry['a']
+        if 'done' in request.POST:
+            if request.session['entries']:
+                entrybundle.save()
+            for entry in request.session['entries']:
+                ma_pk = entry['ma']
+                sa_pk = entry['sa']
+                pa_pk = entry['pa']
 
-            entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_bundle_code=entrybundle, code=0)
-            entry.save()
+                ma = MainAccount.objects.get(pk=ma_pk)
+                sa = SecondaryAccount.objects.get(pk=sa_pk)
+                pa = PersonalAccount.objects.get(pk=pa_pk)
+                a = entry['a']
 
-        del request.session['entries']
+                entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_bundle_code=entrybundle, code=0)
+                entry.save()
+
+            del request.session['entries']
+
+        elif 'discard' in request.POST:
+            if request.session['entries']:
+                del request.session['entries']
+            else:
+                print('No entries in the session')
+
         return redirect('data_entry:data_entry')
 
     request.session['entries'] = [] #create or overwrite if already exists
