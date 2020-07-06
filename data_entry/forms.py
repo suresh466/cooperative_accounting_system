@@ -5,7 +5,7 @@ class DataEntryForm(forms.ModelForm):
     class Meta:
         model = Entry
         fields = ('main_account', 'secondary_account',
-                'personal_account', 'amount')
+                'personal_account', 'amount', 'entry_type')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -8,36 +8,11 @@ from .models import EntryBundle, Entry
 
 def data_entry(request):
     template = 'data_entry/data_entry.html'
+    print(request.POST)
 
-    entrybundle = EntryBundle()
-
-    if request.method == "POST":
-
-        if 'done' in request.POST:
-            if request.session['entries']:
-                entrybundle.save()
-                counter = 0
-                for entry in request.session['entries']:
-                    ma_pk = entry['ma']
-                    sa_pk = entry['sa']
-                    pa_pk = entry['pa']
-
-                    ma = MainAccount.objects.get(pk=ma_pk)
-                    sa = SecondaryAccount.objects.get(pk=sa_pk)
-                    pa = PersonalAccount.objects.get(pk=pa_pk)
-                    a = entry['a']
-                    counter += 1
-
-                    entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_bundle=entrybundle, count=counter)
-                    entry.save()
-
-                del request.session['entries']
-
-        elif 'discard' in request.POST:
-            if request.session['entries']:
-                del request.session['entries']
-            else:
-                print('No entries in the session')
+    if 'discard' in request.POST:
+        if request.session['entries']:
+            del request.session['entries']
 
         return redirect('data_entry:data_entry')
 
@@ -69,8 +44,9 @@ def get_entry(request):
     secondary_account_pk = request.POST['secondary_account']
     personal_account_pk = request.POST.get('personal_account')
     amount = request.POST['amount']
+    entry_type = request.POST['entry_type']
 
-    entry = {'ma': main_account_pk, 'sa': secondary_account_pk, 'pa': personal_account_pk, 'a': amount}
+    entry = {'ma': main_account_pk, 'sa': secondary_account_pk, 'pa': personal_account_pk, 'a': amount, 'e_type': entry_type}
     request.session['entries'].append(entry)
     request.session.modified = True
 
@@ -78,11 +54,55 @@ def get_entry(request):
     sa = SecondaryAccount.objects.get(pk=secondary_account_pk)
     pa = PersonalAccount.objects.get(pk=personal_account_pk)
 
-    entry_json = {'ma': ma.name, 'sa': sa.name, 'pa': pa.name, 'a': amount}
+    entry_json = {'ma': ma.name, 'sa': sa.name, 'pa': pa.name, 'a': amount, 'e_type': entry_type}
 
     session_entries = entry_json
 
     return JsonResponse(session_entries, safe=False)
+
+def save_session_entries(request):
+    def drcr_balance_check(entries):
+        dr = 0
+        cr = 0
+        for entry in entries:
+            if entry['e_type'] == 'dr':
+                dr += int(entry['a'])
+            elif entry['e_type'] == 'cr':
+                cr += int(entry['a'])
+
+        if dr == cr:
+            return (1, dr, cr, dr-cr)
+        elif dr>cr or cr>dr:
+            return (-1, dr, cr, dr-cr)
+
+    if request.session['entries']:
+        entrybundle = EntryBundle()
+        drcr_balance_check_val = drcr_balance_check(request.session['entries'])
+        if drcr_balance_check_val[0] == 1:
+            entrybundle.save()
+            counter = 0
+            for entry in request.session['entries']:
+                ma_pk = entry['ma']
+                sa_pk = entry['sa']
+                pa_pk = entry['pa']
+
+                ma = MainAccount.objects.get(pk=ma_pk)
+                sa = SecondaryAccount.objects.get(pk=sa_pk)
+                pa = PersonalAccount.objects.get(pk=pa_pk)
+                a = entry['a']
+                e_type = entry['e_type']
+                counter += 1
+
+                entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_type=e_type, entry_bundle=entrybundle, count=counter)
+                entry.save()
+
+            del request.session['entries']
+            return redirect('data_entry:data_entry')
+
+    if 'drcr_balance_check_val' in locals():
+        return JsonResponse(drcr_balance_check_val, safe=False)
+    else:
+        return HttpResponse('')
 
 def discard_session_entry(request):
     del request.session['entries'][-1]
