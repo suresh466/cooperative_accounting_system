@@ -11,12 +11,34 @@
 	{{ form.as_p }}
 	<button type="submit" name="add">Add</button>
 </form>
-<br>
+</br>
 <form method="POST" id="entryBundleForm">
 	{% csrf_token %}
 	<button type="submit" name="discard">Discard</button>
 	<button id="save_session_entries" save_session_entries_url="{% url 'data_entry:save_session_entries' %}">Done</button>
 </form>
+</br>
+<table id="session_entries_table">
+	<thead>
+	<tr>
+		<th>S.N</th>
+		<th>Main A/c</th>
+		<th>Seconary A/c</th>
+		<th>Personal A/c</th>
+		<th>Debit</th>
+		<th>Credit</th>
+	</tr>
+	</thead>
+	<tbody>
+	</tbody>
+	<tfoot>
+	<tr>
+		<th>Total:</th>
+		<td id="total_debit">0</td>
+		<td id="total_credit">0</td>
+	</tr>
+	</tfoot>
+</table>
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script> //GET RID OF JQUERY ASAP
@@ -60,12 +82,31 @@ $(document).on("submit", "#dataEntryForm", function(e){
 	  "entry_type": entry_type,
 	  "csrfmiddlewaretoken": csrfmiddlewaretoken,
 	},
-	success:function(session_entries){
+	success:function(session_entry){
 	  $("#id_main_account").val("");
 	  $("#id_secondary_account").val("");
 	  $("#id_personal_account").val("");
 	  $("#id_amount").val("");
-	  $(".entries").prepend("<li>" + "main_ac: " + session_entries.ma +  " | sec_ac: " + session_entries.sa + " | pers_ac: " + session_entries.pa + " | amount: " + session_entries.a + "</li>")
+	  $("#id_entry_type").val("");
+		let trcount = $("#session_entries_table >tbody >tr").length;
+		let serial_number = (trcount !== 0) ? trcount+1:1;
+		let main_account = session_entry.ma;
+		let secondary_account = session_entry.sa;
+		let personal_account = session_entry.pa;
+		let debit = (session_entry.e_type === 'dr') ? session_entry.a:0; // if entry type is dr then value is entrys amount else 0
+		let credit= (session_entry.e_type === 'cr') ? session_entry.a:0;
+		let markup = "<tr><td>" +
+			serial_number + "</td><td>" +
+			main_account + "</td><td>" +
+			secondary_account + "</td><td>" +
+			personal_account + "</td><td>" +
+			debit + "</td><td>" +
+			credit + "</td></tr>";
+		let total_debit = session_entry.drcr_balance_val[1]
+		let total_credit = session_entry.drcr_balance_val[2]
+		$("#session_entries_table tbody").append(markup);
+		$("#session_entries_table #total_debit").html(total_debit);
+		$("#session_entries_table #total_credit").html(total_credit);
 	}
   });
 });

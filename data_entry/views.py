@@ -38,6 +38,20 @@ def load_secondary_accounts(request):
 
     return render(request, template, context)
 
+def drcr_balance_check(entries):
+    dr = 0
+    cr = 0
+    for entry in entries:
+        if entry['e_type'] == 'dr':
+            dr += int(entry['a'])
+        elif entry['e_type'] == 'cr':
+            cr += int(entry['a'])
+
+    if dr == cr:
+        return (1, dr, cr, dr-cr)
+    elif dr>cr or cr>dr:
+        return (-1, dr, cr, dr-cr)
+
 def get_entry(request):
 
     main_account_pk = request.POST['main_account']
@@ -53,27 +67,15 @@ def get_entry(request):
     ma = MainAccount.objects.get(pk=main_account_pk)
     sa = SecondaryAccount.objects.get(pk=secondary_account_pk)
     pa = PersonalAccount.objects.get(pk=personal_account_pk)
+    drcr_balance_val = drcr_balance_check(request.session['entries'])
 
-    entry_json = {'ma': ma.name, 'sa': sa.name, 'pa': pa.name, 'a': amount, 'e_type': entry_type}
+    entry_json = {'ma': ma.name, 'sa': sa.name, 'pa': pa.name, 'a': amount, 'e_type': entry_type, 'drcr_balance_val': drcr_balance_val}
 
-    session_entries = entry_json
+    session_entry = entry_json
 
-    return JsonResponse(session_entries, safe=False)
+    return JsonResponse(session_entry, safe=False)
 
 def save_session_entries(request):
-    def drcr_balance_check(entries):
-        dr = 0
-        cr = 0
-        for entry in entries:
-            if entry['e_type'] == 'dr':
-                dr += int(entry['a'])
-            elif entry['e_type'] == 'cr':
-                cr += int(entry['a'])
-
-        if dr == cr:
-            return (1, dr, cr, dr-cr)
-        elif dr>cr or cr>dr:
-            return (-1, dr, cr, dr-cr)
 
     if request.session['entries']:
         entrybundle = EntryBundle()
