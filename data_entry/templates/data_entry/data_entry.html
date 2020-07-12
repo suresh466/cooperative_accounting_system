@@ -8,15 +8,10 @@
 
 <form method="POST" id="dataEntryForm" data-secondary-accounts-url="{% url 'data_entry:ajax_load_secondary_accounts' %}" get-entry-url="{% url 'data_entry:get_entry' %}">
 	{% csrf_token %}
-	{{ form.as_p }}
+	{{ form}}
 	<button type="submit" name="add">Add</button>
 </form>
 </br>
-<form method="POST" id="entryBundleForm">
-	{% csrf_token %}
-	<button type="submit" name="discard">Discard</button>
-	<button id="save_session_entries" save_session_entries_url="{% url 'data_entry:save_session_entries' %}">Done</button>
-</form>
 </br>
 <table id="session_entries_table">
 	<thead>
@@ -39,6 +34,12 @@
 	</tr>
 	</tfoot>
 </table>
+</br>
+<form method="POST" id="entryBundleForm">
+	{% csrf_token %}
+	<button type="submit" name="discard">Delete All</button>
+	<button id="save_session_entries" save_session_entries_url="{% url 'data_entry:save_session_entries' %}">Done</button>
+</form>
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script> //GET RID OF JQUERY ASAP
