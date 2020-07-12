@@ -89,15 +89,14 @@ $(document).on("submit", "#dataEntryForm", function(e){
 	  $("#id_personal_account").val("");
 	  $("#id_amount").val("");
 	  $("#id_entry_type").val("");
-		let trcount = $("#session_entries_table >tbody >tr").length;
-		let serial_number = (trcount !== 0) ? trcount+1:1;
+		let entry_count = session_entry.entry_count
 		let main_account = session_entry.ma;
 		let secondary_account = session_entry.sa;
 		let personal_account = session_entry.pa;
 		let debit = (session_entry.e_type === 'dr') ? session_entry.a:0; // if entry type is dr then value is entrys amount else 0
 		let credit= (session_entry.e_type === 'cr') ? session_entry.a:0;
 		let markup = "<tr><td>" +
-			serial_number + "</td><td>" +
+			entry_count + "</td><td>" +
 			main_account + "</td><td>" +
 			secondary_account + "</td><td>" +
 			personal_account + "</td><td>" +
