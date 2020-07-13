@@ -29,6 +29,10 @@
 		<td id="total_debit">0</td>
 		<td id="total_credit">0</td>
 	</tr>
+	<tr>
+		<th>Difference:</th>
+		<td id="drcr_difference">0</td>
+	</tr>
 	</tfoot>
 </table>
 </br>
@@ -101,9 +105,11 @@ $(document).on("submit", "#dataEntryForm", function(e){
 			credit + "</td><td><button onclick=discard_session_entry(" + entry_count + ")>Delete</button</td></tr>";
 		let total_debit = session_entry.drcr_balance_val[1]
 		let total_credit = session_entry.drcr_balance_val[2]
+		let drcr_difference = session_entry.drcr_balance_val[3]
 		$("#session_entries_table tbody").append(markup);
 		$("#session_entries_table #total_debit").html(total_debit);
 		$("#session_entries_table #total_credit").html(total_credit);
+		$("#session_entries_table #drcr_difference").html(drcr_difference);
 	}
   });
 });
@@ -111,34 +117,30 @@ $(document).on("submit", "#dataEntryForm", function(e){
 
 <script type="text/javascript"> //save session entries
 $(document).ready(function(){
-  $("#save_session_entries").click(function(e){
-	e.preventDefault()
-
-    var url = $("#save_session_entries").attr("save_session_entries_url");
-    var csrfmiddlewaretoken = $("input[name=csrfmiddlewaretoken]").val();
-
-    $.ajax({
-      type:"POST",
-      url:url,
-      data: {
-	    "csrfmiddlewaretoken": csrfmiddlewaretoken,
-	  },
-	  success:function(data){
-		if(data === ''){
-		  alert("No entries in the session")
-		}
-		else{
-		  if(data[3] > 0){
-			alert("Debit balance is more by " + data[3] + " || Dr: " + data[1] + " Cr: " + data[2])
-		  }
-		  else{
-			let data3 = data[3] * -1
-			alert("Credit balance is more by " + data3 + " || Dr: " + data[1] + " Cr: " + data[2])
-		  }
-		}
-	  }
+	$("#save_session_entries").click(function(e){
+		e.preventDefault()
+		var url = $("#save_session_entries").attr("save_session_entries_url");
+		var csrfmiddlewaretoken = $("input[name=csrfmiddlewaretoken]").val();
+		$.ajax({
+			type:"POST",
+			url:url,
+			data: {
+				"csrfmiddlewaretoken": csrfmiddlewaretoken,
+			},
+			success:function(data){
+				console.log(data)
+				if(data === ''){
+					alert("No entries in the session")
+				}
+				else if(data ==='reload'){
+					location.reload()
+				}
+			},
+			error:function(data){
+				alert("Please check the difference between debit and credit balance before submitting. It should be 0")
+			}
+		});
 	});
-  });
 });
 </script>
 
