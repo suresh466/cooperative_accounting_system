@@ -13,10 +13,12 @@ def data_entry(request):
     if 'discard' in request.POST:
         if request.session['entries']:
             del request.session['entries']
+            del request.session['entries_counter']
 
         return redirect('data_entry:data_entry')
 
     request.session['entries'] = [] #create or overwrite if already exists
+    request.session['entries_counter'] = 1
 
     form = DataEntryForm()
 
@@ -38,6 +40,20 @@ def load_secondary_accounts(request):
 
     return render(request, template, context)
 
+def drcr_balance_check(entries):
+    dr = 0
+    cr = 0
+    for entry in entries:
+        if entry['e_type'] == 'dr':
+            dr += int(entry['a'])
+        elif entry['e_type'] == 'cr':
+            cr += int(entry['a'])
+
+    if dr == cr:
+        return (1, dr, cr, dr-cr)
+    elif dr>cr or cr>dr:
+        return (-1, dr, cr, dr-cr)
+
 def get_entry(request):
 
     main_account_pk = request.POST['main_account']
@@ -45,35 +61,25 @@ def get_entry(request):
     personal_account_pk = request.POST.get('personal_account')
     amount = request.POST['amount']
     entry_type = request.POST['entry_type']
+    entry_count = request.session['entries_counter']
 
-    entry = {'ma': main_account_pk, 'sa': secondary_account_pk, 'pa': personal_account_pk, 'a': amount, 'e_type': entry_type}
+    entry = {'entry_count': entry_count, 'ma': main_account_pk, 'sa': secondary_account_pk, 'pa': personal_account_pk, 'a': amount, 'e_type': entry_type}
     request.session['entries'].append(entry)
+    request.session['entries_counter'] = request.session['entries_counter'] + 1
     request.session.modified = True
 
     ma = MainAccount.objects.get(pk=main_account_pk)
     sa = SecondaryAccount.objects.get(pk=secondary_account_pk)
     pa = PersonalAccount.objects.get(pk=personal_account_pk)
+    drcr_balance_val = drcr_balance_check(request.session['entries'])
 
-    entry_json = {'ma': ma.name, 'sa': sa.name, 'pa': pa.name, 'a': amount, 'e_type': entry_type}
+    entry_json = {'entry_count': entry_count, 'ma': ma.name, 'sa': sa.name, 'pa': pa.name, 'a': amount, 'e_type': entry_type, 'drcr_balance_val': drcr_balance_val}
 
-    session_entries = entry_json
+    session_entry = entry_json
 
-    return JsonResponse(session_entries, safe=False)
+    return JsonResponse(session_entry, safe=False)
 
 def save_session_entries(request):
-    def drcr_balance_check(entries):
-        dr = 0
-        cr = 0
-        for entry in entries:
-            if entry['e_type'] == 'dr':
-                dr += int(entry['a'])
-            elif entry['e_type'] == 'cr':
-                cr += int(entry['a'])
-
-        if dr == cr:
-            return (1, dr, cr, dr-cr)
-        elif dr>cr or cr>dr:
-            return (-1, dr, cr, dr-cr)
 
     if request.session['entries']:
         entrybundle = EntryBundle()
@@ -97,6 +103,7 @@ def save_session_entries(request):
                 entry.save()
 
             del request.session['entries']
+            del request.session['entries_counter']
             return redirect('data_entry:data_entry')
 
     if 'drcr_balance_check_val' in locals():
@@ -105,7 +112,16 @@ def save_session_entries(request):
         return HttpResponse('')
 
 def discard_session_entry(request):
-    del request.session['entries'][-1]
-    request.session.modified = "True"
+    entry_count = int(request.GET['entry_count'])
 
-    return HttpResponse('')
+    for index in range(len(request.session['entries'])):
+        if request.session['entries'][index]['entry_count'] == entry_count:
+            del request.session['entries'][index]
+            request.session.modified = True
+            print("entry deleted with entry count of:" + str(entry_count))
+            print(request.session['entries'])
+            break
+
+    drcr_balance_val = drcr_balance_check(request.session['entries'])
+
+    return JsonResponse(drcr_balance_val, safe=False)

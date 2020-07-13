@@ -1,25 +1,45 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<button id="discard_latest_session_entry" discard-session-entry-url="{% url 'data_entry:discard_session_entry' %}">Remove latest entry</button>
 <h3>Entries</h3>
-<ul class="entries">
-</ul>
 
 <form method="POST" id="dataEntryForm" data-secondary-accounts-url="{% url 'data_entry:ajax_load_secondary_accounts' %}" get-entry-url="{% url 'data_entry:get_entry' %}">
 	{% csrf_token %}
-	{{ form.as_p }}
+	{{ form}}
 	<button type="submit" name="add">Add</button>
 </form>
-<br>
+</br>
+</br>
+<table id="session_entries_table" discard-session-entry-url="{% url 'data_entry:discard_session_entry' %}">
+	<thead>
+	<tr>
+		<th>S.N</th>
+		<th>Main A/c</th>
+		<th>Seconary A/c</th>
+		<th>Personal A/c</th>
+		<th>Debit</th>
+		<th>Credit</th>
+	</tr>
+	</thead>
+	<tbody>
+	</tbody>
+	<tfoot>
+	<tr>
+		<th>Total:</th>
+		<td id="total_debit">0</td>
+		<td id="total_credit">0</td>
+	</tr>
+	</tfoot>
+</table>
+</br>
 <form method="POST" id="entryBundleForm">
 	{% csrf_token %}
-	<button type="submit" name="discard">Discard</button>
+	<button type="submit" name="discard">Delete All</button>
 	<button id="save_session_entries" save_session_entries_url="{% url 'data_entry:save_session_entries' %}">Done</button>
 </form>
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-<script> //GET RID OF JQUERY ASAP
+<script> //get secondary account (GET RID OF JQUERY ASAP)
 $("#id_main_account").change(function () {
   var url = $("#dataEntryForm").attr("data-secondary-accounts-url");  // get the url of the `load_secondary_accounts` view
   var mainAccountId = $(this).val();  // get the selected main_account ID from the HTML input
@@ -37,7 +57,7 @@ $("#id_main_account").change(function () {
 });
 </script>
 
-<script type="text/javascript">
+<script type="text/javascript"> //get session entry
 $(document).on("submit", "#dataEntryForm", function(e){
   e.preventDefault(); //prevent default browser behaviour for form submission(reloading)
 
@@ -60,18 +80,36 @@ $(document).on("submit", "#dataEntryForm", function(e){
 	  "entry_type": entry_type,
 	  "csrfmiddlewaretoken": csrfmiddlewaretoken,
 	},
-	success:function(session_entries){
+	success:function(session_entry){
 	  $("#id_main_account").val("");
 	  $("#id_secondary_account").val("");
 	  $("#id_personal_account").val("");
 	  $("#id_amount").val("");
-	  $(".entries").prepend("<li>" + "main_ac: " + session_entries.ma +  " | sec_ac: " + session_entries.sa + " | pers_ac: " + session_entries.pa + " | amount: " + session_entries.a + "</li>")
+	  $("#id_entry_type").val("");
+		let entry_count = session_entry.entry_count
+		let main_account = session_entry.ma;
+		let secondary_account = session_entry.sa;
+		let personal_account = session_entry.pa;
+		let debit = (session_entry.e_type === 'dr') ? session_entry.a:0; // if entry type is dr then value is entrys amount else 0
+		let credit= (session_entry.e_type === 'cr') ? session_entry.a:0;
+		let markup = "<tr id='entry" + entry_count + "'><td>" +
+			entry_count + "</td><td>" +
+			main_account + "</td><td>" +
+			secondary_account + "</td><td>" +
+			personal_account + "</td><td>" +
+			debit + "</td><td>" +
+			credit + "</td><td><button onclick=discard_session_entry(" + entry_count + ")>Delete</button</td></tr>";
+		let total_debit = session_entry.drcr_balance_val[1]
+		let total_credit = session_entry.drcr_balance_val[2]
+		$("#session_entries_table tbody").append(markup);
+		$("#session_entries_table #total_debit").html(total_debit);
+		$("#session_entries_table #total_credit").html(total_credit);
 	}
   });
 });
 </script>
 
-<script type="text/javascript">
+<script type="text/javascript"> //save session entries
 $(document).ready(function(){
   $("#save_session_entries").click(function(e){
 	e.preventDefault()
@@ -104,23 +142,28 @@ $(document).ready(function(){
 });
 </script>
 
-<script type="text/javascript">
-$(document).ready(function(){
-  $("#discard_latest_session_entry").click(function(){
-    var url = $("#discard_latest_session_entry").attr("discard-session-entry-url");
+<script type="text/javascript"> //discard session entry
+function discard_session_entry(entry_count){
+var url = $("#session_entries_table").attr("discard-session-entry-url");
 
-    $.ajax({
-	  url: url,
-	  success: function(data) {
-	    $(".entries").find(":first").remove()
-	    alert("Latest entry Discarded")
-	  },
-	  error: function(data){
-	    alert("No entry to delete")
-	  }
-    });
-  });
-});
+	$.ajax({
+		url: url,
+		data: {"entry_count":entry_count},
+		success: function(data){
+			entry_id = "entry" + entry_count;
+			$("#" + entry_id).remove();
+			let total_debit = data[1];
+			let total_credit = data[2];
+			$("#session_entries_table #total_debit").html(total_debit);
+			$("#session_entries_table #total_credit").html(total_credit);
+			alert("entry Deleted")
+		},
+		error: function(data){
+			alert("something went wrong. Maybe the enry is deleted already")
+
+		}
+	});
+}
 </script>
 
 {% endblock content %}
