@@ -8,7 +8,6 @@ from .models import EntryBundle, Entry
 
 def data_entry(request):
     template = 'data_entry/data_entry.html'
-    print(request.POST)
 
     if 'discard' in request.POST:
         if request.session['entries']:
@@ -104,12 +103,11 @@ def save_session_entries(request):
 
             del request.session['entries']
             del request.session['entries_counter']
-            return redirect('data_entry:data_entry')
+            return HttpResponse('reload')
+        elif drcr_balance_check_val[0] == -1:
+            return HttpResponse(status=400)
 
-    if 'drcr_balance_check_val' in locals():
-        return JsonResponse(drcr_balance_check_val, safe=False)
-    else:
-        return HttpResponse('')
+    return HttpResponse('')
 
 def discard_session_entry(request):
     entry_count = int(request.GET['entry_count'])
@@ -119,7 +117,6 @@ def discard_session_entry(request):
             del request.session['entries'][index]
             request.session.modified = True
             print("entry deleted with entry count of:" + str(entry_count))
-            print(request.session['entries'])
             break
 
     drcr_balance_val = drcr_balance_check(request.session['entries'])
