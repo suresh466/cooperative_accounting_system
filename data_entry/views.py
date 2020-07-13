@@ -112,7 +112,16 @@ def save_session_entries(request):
         return HttpResponse('')
 
 def discard_session_entry(request):
-    del request.session['entries'][-1]
-    request.session.modified = "True"
+    entry_count = int(request.GET['entry_count'])
 
-    return HttpResponse('')
+    for index in range(len(request.session['entries'])):
+        if request.session['entries'][index]['entry_count'] == entry_count:
+            del request.session['entries'][index]
+            request.session.modified = True
+            print("entry deleted with entry count of:" + str(entry_count))
+            print(request.session['entries'])
+            break
+
+    drcr_balance_val = drcr_balance_check(request.session['entries'])
+
+    return JsonResponse(drcr_balance_val, safe=False)
