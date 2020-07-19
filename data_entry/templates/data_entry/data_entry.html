@@ -19,6 +19,8 @@
 		<th>Personal A/c</th>
 		<th>Debit</th>
 		<th>Credit</th>
+		<th>Symbol no.</th>
+		<th>Action</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -38,8 +40,8 @@
 </br>
 <form method="POST" id="entryBundleForm">
 	{% csrf_token %}
-	<button type="submit" name="discard">Delete All</button>
-	<button id="save_session_entries" save_session_entries_url="{% url 'data_entry:save_session_entries' %}">Done</button>
+	<button type="submit" name="discard">Cancel</button>
+	<button id="save_session_entries" save_session_entries_url="{% url 'data_entry:save_session_entries' %}">Save</button>
 </form>
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
@@ -63,55 +65,61 @@ $("#id_main_account").change(function () {
 
 <script type="text/javascript"> //get session entry
 $(document).on("submit", "#dataEntryForm", function(e){
-  e.preventDefault(); //prevent default browser behaviour for form submission(reloading)
+	e.preventDefault(); //prevent default browser behaviour for form submission(reloading)
 
-  var url = $("#dataEntryForm").attr("get-entry-url");
-  var main_account = $("#id_main_account").val();
-  var secondary_account = $("#id_secondary_account").val();
-  var personal_account = $("#id_personal_account").val();
-  var amount = $("#id_amount").val();
-  var entry_type = $("#id_entry_type").val();
-  var csrfmiddlewaretoken = $("input[name=csrfmiddlewaretoken]").val();
+	var url = $("#dataEntryForm").attr("get-entry-url");
+	var main_account = $("#id_main_account").val();
+	var secondary_account = $("#id_secondary_account").val();
+	var personal_account = $("#id_personal_account").val();
+	var amount = $("#id_amount").val();
+	var entry_type = $("#id_entry_type").val();
+	var symbol_number = $("#id_symbol_number").val();
+	var csrfmiddlewaretoken = $("input[name=csrfmiddlewaretoken]").val();
 
-  $.ajax({
-	type:"POST",
-	url:url,
-	data: {
-	  "main_account": main_account,
-	  "secondary_account": secondary_account,
-	  "personal_account": personal_account,
-	  "amount": amount,
-	  "entry_type": entry_type,
-	  "csrfmiddlewaretoken": csrfmiddlewaretoken,
-	},
-	success:function(session_entry){
-	  $("#id_main_account").val("");
-	  $("#id_secondary_account").val("");
-	  $("#id_personal_account").val("");
-	  $("#id_amount").val("");
-	  $("#id_entry_type").val("");
-		let entry_count = session_entry.entry_count
-		let main_account = session_entry.ma;
-		let secondary_account = session_entry.sa;
-		let personal_account = session_entry.pa;
-		let debit = (session_entry.e_type === 'dr') ? session_entry.a:0; // if entry type is dr then value is entrys amount else 0
-		let credit= (session_entry.e_type === 'cr') ? session_entry.a:0;
-		let markup = "<tr id='entry" + entry_count + "'><td>" +
-			entry_count + "</td><td>" +
-			main_account + "</td><td>" +
-			secondary_account + "</td><td>" +
-			personal_account + "</td><td>" +
-			debit + "</td><td>" +
-			credit + "</td><td><button onclick=discard_session_entry(" + entry_count + ")>Delete</button</td></tr>";
-		let total_debit = session_entry.drcr_balance_val[1]
-		let total_credit = session_entry.drcr_balance_val[2]
-		let drcr_difference = session_entry.drcr_balance_val[3]
-		$("#session_entries_table tbody").append(markup);
-		$("#session_entries_table #total_debit").html(total_debit);
-		$("#session_entries_table #total_credit").html(total_credit);
-		$("#session_entries_table #drcr_difference").html(drcr_difference);
-	}
-  });
+	$.ajax({
+		type:"POST",
+		url:url,
+		data: {
+			"main_account": main_account,
+			"secondary_account": secondary_account,
+			"personal_account": personal_account,
+			"amount": amount,
+			"entry_type": entry_type,
+			"symbol_number": symbol_number,
+			"csrfmiddlewaretoken": csrfmiddlewaretoken,
+		},
+		success:function(session_entry){
+			$("#id_main_account").val("");
+			$("#id_secondary_account").val("");
+			$("#id_personal_account").val("");
+			$("#id_amount").val("");
+			$("#id_symbol_number").val("");
+			$("#id_entry_type").val("");
+			let entry_count = session_entry.entry_count
+			let main_account = session_entry.ma;
+			let secondary_account = session_entry.sa;
+			let personal_account = session_entry.pa;
+			let debit = (session_entry.e_type === 'dr') ? session_entry.a:0; // if entry type is dr then value is entrys amount else 0
+			let credit = (session_entry.e_type === 'cr') ? session_entry.a:0;
+			let symbol_number = session_entry.sn;
+			let markup = "<tr id='entry" + entry_count + "'><td>" +
+				entry_count + "</td><td>" +
+				main_account + "</td><td>" +
+				secondary_account + "</td><td>" +
+				personal_account + "</td><td>" +
+				debit + "</td><td>" +
+				credit + "</td><td>" +
+				symbol_number + "</td><td>" +
+				"<button onclick=discard_session_entry(" + entry_count + ")>Delete</button</td></tr>"
+			let total_debit = session_entry.drcr_balance_val[1]
+			let total_credit = session_entry.drcr_balance_val[2]
+			let drcr_difference = session_entry.drcr_balance_val[3]
+			$("#session_entries_table tbody").append(markup);
+			$("#session_entries_table #total_debit").html(total_debit);
+			$("#session_entries_table #total_credit").html(total_credit);
+			$("#session_entries_table #drcr_difference").html(drcr_difference)
+		}
+	});
 });
 </script>
 

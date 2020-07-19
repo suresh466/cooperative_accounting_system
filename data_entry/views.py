@@ -61,8 +61,9 @@ def get_entry(request):
     amount = request.POST['amount']
     entry_type = request.POST['entry_type']
     entry_count = request.session['entries_counter']
+    symbol_number = request.POST['symbol_number']
 
-    entry = {'entry_count': entry_count, 'ma': main_account_pk, 'sa': secondary_account_pk, 'pa': personal_account_pk, 'a': amount, 'e_type': entry_type}
+    entry = {'entry_count': entry_count, 'ma': main_account_pk, 'sa': secondary_account_pk, 'pa': personal_account_pk, 'a': amount, 'sn':symbol_number, 'e_type': entry_type}
     request.session['entries'].append(entry)
     request.session['entries_counter'] = request.session['entries_counter'] + 1
     request.session.modified = True
@@ -72,7 +73,7 @@ def get_entry(request):
     pa = PersonalAccount.objects.get(pk=personal_account_pk)
     drcr_balance_val = drcr_balance_check(request.session['entries'])
 
-    entry_json = {'entry_count': entry_count, 'ma': ma.name, 'sa': sa.name, 'pa': pa.name, 'a': amount, 'e_type': entry_type, 'drcr_balance_val': drcr_balance_val}
+    entry_json = {'entry_count': entry_count, 'ma': ma.name, 'sa': sa.name, 'pa': pa.name, 'a': amount,  'sn': symbol_number, 'e_type': entry_type, 'drcr_balance_val': drcr_balance_val}
 
     session_entry = entry_json
 
@@ -94,11 +95,12 @@ def save_session_entries(request):
                 ma = MainAccount.objects.get(pk=ma_pk)
                 sa = SecondaryAccount.objects.get(pk=sa_pk)
                 pa = PersonalAccount.objects.get(pk=pa_pk)
+                sn = entry['sn']
                 a = entry['a']
                 e_type = entry['e_type']
                 counter += 1
 
-                entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_type=e_type, entry_bundle=entrybundle, count=counter)
+                entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_type=e_type, symbol_number=sn, entry_bundle=entrybundle, count=counter)
                 entry.save()
 
             del request.session['entries']
