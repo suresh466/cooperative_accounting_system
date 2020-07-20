@@ -7,6 +7,7 @@ from accounts.models import (MainAccount, SecondaryAccount,
 class EntryBundle(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
+    detail = models.TextField(max_length=1536)
 
     def __str__(self):
         return str(self.date_created)

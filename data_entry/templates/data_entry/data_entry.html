@@ -38,11 +38,15 @@
 	</tfoot>
 </table>
 </br>
-<form method="POST" id="entryBundleForm">
+<form method="POST" id="entryBundleForm" save_session_entries_url="{% url 'data_entry:save_session_entries' %}">
 	{% csrf_token %}
-	<button type="submit" name="discard">Cancel</button>
-	<button id="save_session_entries" save_session_entries_url="{% url 'data_entry:save_session_entries' %}">Save</button>
+	<label for="detail">Detail:</label>
+	<input type="text" name="detail" id="session_entries_detail" required>
+	<button type="submit" name="save" >Save</button>
 </form>
+</br>
+
+<button id="cancel_session_entries" cancel_session_entries_url="{% url 'data_entry:cancel_session_entries' %}" onclick=cancel_session_entries()>Cancel</button>
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script> //get secondary account (GET RID OF JQUERY ASAP)
@@ -125,18 +129,19 @@ $(document).on("submit", "#dataEntryForm", function(e){
 
 <script type="text/javascript"> //save session entries
 $(document).ready(function(){
-	$("#save_session_entries").click(function(e){
+	$("#entryBundleForm").submit(function(e){
 		e.preventDefault()
-		var url = $("#save_session_entries").attr("save_session_entries_url");
+		var url = $("#entryBundleForm").attr("save_session_entries_url");
+		var detail = $("input[name=detail]").val();
 		var csrfmiddlewaretoken = $("input[name=csrfmiddlewaretoken]").val();
 		$.ajax({
 			type:"POST",
 			url:url,
 			data: {
+				"detail": detail,
 				"csrfmiddlewaretoken": csrfmiddlewaretoken,
 			},
 			success:function(data){
-				console.log(data)
 				if(data === ''){
 					alert("No entries in the session")
 				}
@@ -171,6 +176,23 @@ var url = $("#session_entries_table").attr("discard-session-entry-url");
 		error: function(data){
 			alert("something went wrong. Maybe the enry is deleted already")
 
+		}
+	});
+}
+</script>
+
+<script type="text/javascript"> //discard all session entries
+function cancel_session_entries(){
+	var url = $("#cancel_session_entries").attr("cancel_session_entries_url");
+
+	$.ajax({
+		url: url,
+		success: function(data){
+			alert("canceled the data entry session")
+			location.reload()
+		},
+		error: function(data){
+			alert(data.responseText)
 		}
 	});
 }

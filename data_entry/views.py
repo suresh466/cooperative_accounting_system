@@ -9,13 +9,6 @@ from .models import EntryBundle, Entry
 def data_entry(request):
     template = 'data_entry/data_entry.html'
 
-    if 'discard' in request.POST:
-        if request.session['entries']:
-            del request.session['entries']
-            del request.session['entries_counter']
-
-        return redirect('data_entry:data_entry')
-
     request.session['entries'] = [] #create or overwrite if already exists
     request.session['entries_counter'] = 1
 
@@ -82,9 +75,10 @@ def get_entry(request):
 def save_session_entries(request):
 
     if request.session['entries']:
-        entrybundle = EntryBundle()
         drcr_balance_check_val = drcr_balance_check(request.session['entries'])
         if drcr_balance_check_val[0] == 1:
+            detail = request.POST['detail']
+            entrybundle = EntryBundle(detail=detail)
             entrybundle.save()
             counter = 0
             for entry in request.session['entries']:
@@ -124,3 +118,12 @@ def discard_session_entry(request):
     drcr_balance_val = drcr_balance_check(request.session['entries'])
 
     return JsonResponse(drcr_balance_val, safe=False)
+
+def cancel_session_entries(request):
+    if request.session['entries']:
+        del request.session['entries']
+        del request.session['entries_counter']
+
+        return redirect('data_entry:data_entry')
+    else:
+        return HttpResponse('Something went wrong', status=400)

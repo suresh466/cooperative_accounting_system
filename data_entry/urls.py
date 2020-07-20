@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (data_entry, load_secondary_accounts,
         get_entry, discard_session_entry,
-        save_session_entries)
+        save_session_entries, cancel_session_entries,)
 
 app_name = 'data_entry'
 urlpatterns = [
@@ -11,4 +11,5 @@ urlpatterns = [
         path('ajax/discard_session_entry/', discard_session_entry, name='discard_session_entry'),
         path('ajax/discard_session_entry/', discard_session_entry, name='discard_session_entry'),
         path('ajax/save_session_entries/', save_session_entries, name='save_session_entries'),
+        path('ajax/cancel_session_entries/', cancel_session_entries, name='cancel_session_entries'),
         ]
