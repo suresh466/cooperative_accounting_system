@@ -19,6 +19,8 @@
 		<th>Personal A/c</th>
 		<th>Debit</th>
 		<th>Credit</th>
+		<th>Symbol no.</th>
+		<th>Action</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -36,11 +38,15 @@
 	</tfoot>
 </table>
 </br>
-<form method="POST" id="entryBundleForm">
+<form method="POST" id="entryBundleForm" save_session_entries_url="{% url 'data_entry:save_session_entries' %}">
 	{% csrf_token %}
-	<button type="submit" name="discard">Delete All</button>
-	<button id="save_session_entries" save_session_entries_url="{% url 'data_entry:save_session_entries' %}">Done</button>
+	<label for="detail">Detail:</label>
+	<input type="text" name="detail" id="session_entries_detail" required>
+	<button type="submit" name="save" >Save</button>
 </form>
+</br>
+
+<button id="cancel_session_entries" cancel_session_entries_url="{% url 'data_entry:cancel_session_entries' %}" onclick=cancel_session_entries()>Cancel</button>
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script> //get secondary account (GET RID OF JQUERY ASAP)
@@ -63,72 +69,79 @@ $("#id_main_account").change(function () {
 
 <script type="text/javascript"> //get session entry
 $(document).on("submit", "#dataEntryForm", function(e){
-  e.preventDefault(); //prevent default browser behaviour for form submission(reloading)
+	e.preventDefault(); //prevent default browser behaviour for form submission(reloading)
 
-  var url = $("#dataEntryForm").attr("get-entry-url");
-  var main_account = $("#id_main_account").val();
-  var secondary_account = $("#id_secondary_account").val();
-  var personal_account = $("#id_personal_account").val();
-  var amount = $("#id_amount").val();
-  var entry_type = $("#id_entry_type").val();
-  var csrfmiddlewaretoken = $("input[name=csrfmiddlewaretoken]").val();
+	var url = $("#dataEntryForm").attr("get-entry-url");
+	var main_account = $("#id_main_account").val();
+	var secondary_account = $("#id_secondary_account").val();
+	var personal_account = $("#id_personal_account").val();
+	var amount = $("#id_amount").val();
+	var entry_type = $("#id_entry_type").val();
+	var symbol_number = $("#id_symbol_number").val();
+	var csrfmiddlewaretoken = $("input[name=csrfmiddlewaretoken]").val();
 
-  $.ajax({
-	type:"POST",
-	url:url,
-	data: {
-	  "main_account": main_account,
-	  "secondary_account": secondary_account,
-	  "personal_account": personal_account,
-	  "amount": amount,
-	  "entry_type": entry_type,
-	  "csrfmiddlewaretoken": csrfmiddlewaretoken,
-	},
-	success:function(session_entry){
-	  $("#id_main_account").val("");
-	  $("#id_secondary_account").val("");
-	  $("#id_personal_account").val("");
-	  $("#id_amount").val("");
-	  $("#id_entry_type").val("");
-		let entry_count = session_entry.entry_count
-		let main_account = session_entry.ma;
-		let secondary_account = session_entry.sa;
-		let personal_account = session_entry.pa;
-		let debit = (session_entry.e_type === 'dr') ? session_entry.a:0; // if entry type is dr then value is entrys amount else 0
-		let credit= (session_entry.e_type === 'cr') ? session_entry.a:0;
-		let markup = "<tr id='entry" + entry_count + "'><td>" +
-			entry_count + "</td><td>" +
-			main_account + "</td><td>" +
-			secondary_account + "</td><td>" +
-			personal_account + "</td><td>" +
-			debit + "</td><td>" +
-			credit + "</td><td><button onclick=discard_session_entry(" + entry_count + ")>Delete</button</td></tr>";
-		let total_debit = session_entry.drcr_balance_val[1]
-		let total_credit = session_entry.drcr_balance_val[2]
-		let drcr_difference = session_entry.drcr_balance_val[3]
-		$("#session_entries_table tbody").append(markup);
-		$("#session_entries_table #total_debit").html(total_debit);
-		$("#session_entries_table #total_credit").html(total_credit);
-		$("#session_entries_table #drcr_difference").html(drcr_difference);
-	}
-  });
+	$.ajax({
+		type:"POST",
+		url:url,
+		data: {
+			"main_account": main_account,
+			"secondary_account": secondary_account,
+			"personal_account": personal_account,
+			"amount": amount,
+			"entry_type": entry_type,
+			"symbol_number": symbol_number,
+			"csrfmiddlewaretoken": csrfmiddlewaretoken,
+		},
+		success:function(session_entry){
+			$("#id_main_account").val("");
+			$("#id_secondary_account").val("");
+			$("#id_personal_account").val("");
+			$("#id_amount").val("");
+			$("#id_symbol_number").val("");
+			$("#id_entry_type").val("");
+			let entry_count = session_entry.entry_count
+			let main_account = session_entry.ma;
+			let secondary_account = session_entry.sa;
+			let personal_account = session_entry.pa;
+			let debit = (session_entry.e_type === 'dr') ? session_entry.a:0; // if entry type is dr then value is entrys amount else 0
+			let credit = (session_entry.e_type === 'cr') ? session_entry.a:0;
+			let symbol_number = session_entry.sn;
+			let markup = "<tr id='entry" + entry_count + "'><td>" +
+				entry_count + "</td><td>" +
+				main_account + "</td><td>" +
+				secondary_account + "</td><td>" +
+				personal_account + "</td><td>" +
+				debit + "</td><td>" +
+				credit + "</td><td>" +
+				symbol_number + "</td><td>" +
+				"<button onclick=discard_session_entry(" + entry_count + ")>Delete</button</td></tr>"
+			let total_debit = session_entry.drcr_balance_val[1]
+			let total_credit = session_entry.drcr_balance_val[2]
+			let drcr_difference = session_entry.drcr_balance_val[3]
+			$("#session_entries_table tbody").append(markup);
+			$("#session_entries_table #total_debit").html(total_debit);
+			$("#session_entries_table #total_credit").html(total_credit);
+			$("#session_entries_table #drcr_difference").html(drcr_difference)
+		}
+	});
 });
 </script>
 
 <script type="text/javascript"> //save session entries
 $(document).ready(function(){
-	$("#save_session_entries").click(function(e){
+	$("#entryBundleForm").submit(function(e){
 		e.preventDefault()
-		var url = $("#save_session_entries").attr("save_session_entries_url");
+		var url = $("#entryBundleForm").attr("save_session_entries_url");
+		var detail = $("input[name=detail]").val();
 		var csrfmiddlewaretoken = $("input[name=csrfmiddlewaretoken]").val();
 		$.ajax({
 			type:"POST",
 			url:url,
 			data: {
+				"detail": detail,
 				"csrfmiddlewaretoken": csrfmiddlewaretoken,
 			},
 			success:function(data){
-				console.log(data)
 				if(data === ''){
 					alert("No entries in the session")
 				}
@@ -163,6 +176,23 @@ var url = $("#session_entries_table").attr("discard-session-entry-url");
 		error: function(data){
 			alert("something went wrong. Maybe the enry is deleted already")
 
+		}
+	});
+}
+</script>
+
+<script type="text/javascript"> //discard all session entries
+function cancel_session_entries(){
+	var url = $("#cancel_session_entries").attr("cancel_session_entries_url");
+
+	$.ajax({
+		url: url,
+		success: function(data){
+			alert("canceled the data entry session")
+			location.reload()
+		},
+		error: function(data){
+			alert(data.responseText)
 		}
 	});
 }

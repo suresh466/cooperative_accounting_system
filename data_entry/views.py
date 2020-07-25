@@ -9,13 +9,6 @@ from .models import EntryBundle, Entry
 def data_entry(request):
     template = 'data_entry/data_entry.html'
 
-    if 'discard' in request.POST:
-        if request.session['entries']:
-            del request.session['entries']
-            del request.session['entries_counter']
-
-        return redirect('data_entry:data_entry')
-
     request.session['entries'] = [] #create or overwrite if already exists
     request.session['entries_counter'] = 1
 
@@ -61,8 +54,9 @@ def get_entry(request):
     amount = request.POST['amount']
     entry_type = request.POST['entry_type']
     entry_count = request.session['entries_counter']
+    symbol_number = request.POST['symbol_number']
 
-    entry = {'entry_count': entry_count, 'ma': main_account_pk, 'sa': secondary_account_pk, 'pa': personal_account_pk, 'a': amount, 'e_type': entry_type}
+    entry = {'entry_count': entry_count, 'ma': main_account_pk, 'sa': secondary_account_pk, 'pa': personal_account_pk, 'a': amount, 'sn':symbol_number, 'e_type': entry_type}
     request.session['entries'].append(entry)
     request.session['entries_counter'] = request.session['entries_counter'] + 1
     request.session.modified = True
@@ -72,7 +66,7 @@ def get_entry(request):
     pa = PersonalAccount.objects.get(pk=personal_account_pk)
     drcr_balance_val = drcr_balance_check(request.session['entries'])
 
-    entry_json = {'entry_count': entry_count, 'ma': ma.name, 'sa': sa.name, 'pa': pa.name, 'a': amount, 'e_type': entry_type, 'drcr_balance_val': drcr_balance_val}
+    entry_json = {'entry_count': entry_count, 'ma': ma.name, 'sa': sa.name, 'pa': pa.name, 'a': amount,  'sn': symbol_number, 'e_type': entry_type, 'drcr_balance_val': drcr_balance_val}
 
     session_entry = entry_json
 
@@ -81,9 +75,10 @@ def get_entry(request):
 def save_session_entries(request):
 
     if request.session['entries']:
-        entrybundle = EntryBundle()
         drcr_balance_check_val = drcr_balance_check(request.session['entries'])
         if drcr_balance_check_val[0] == 1:
+            detail = request.POST['detail']
+            entrybundle = EntryBundle(detail=detail)
             entrybundle.save()
             counter = 0
             for entry in request.session['entries']:
@@ -94,11 +89,12 @@ def save_session_entries(request):
                 ma = MainAccount.objects.get(pk=ma_pk)
                 sa = SecondaryAccount.objects.get(pk=sa_pk)
                 pa = PersonalAccount.objects.get(pk=pa_pk)
+                sn = entry['sn']
                 a = entry['a']
                 e_type = entry['e_type']
                 counter += 1
 
-                entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_type=e_type, entry_bundle=entrybundle, count=counter)
+                entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_type=e_type, symbol_number=sn, entry_bundle=entrybundle, count=counter)
                 entry.save()
 
             del request.session['entries']
@@ -122,3 +118,12 @@ def discard_session_entry(request):
     drcr_balance_val = drcr_balance_check(request.session['entries'])
 
     return JsonResponse(drcr_balance_val, safe=False)
+
+def cancel_session_entries(request):
+    if request.session['entries']:
+        del request.session['entries']
+        del request.session['entries_counter']
+
+        return redirect('data_entry:data_entry')
+    else:
+        return HttpResponse('Something went wrong', status=400)
