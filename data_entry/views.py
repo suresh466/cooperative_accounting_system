@@ -4,6 +4,8 @@ from accounts.models import (MainAccount, SecondaryAccount,
         PersonalAccount)
 from django.http import JsonResponse, HttpResponse
 from .models import EntryBundle, Entry
+from decimal import Decimal
+from django.core.exceptions import ValidationError
 # Create your views here.
 
 def data_entry(request):
@@ -36,10 +38,11 @@ def drcr_balance_check(entries):
     dr = 0
     cr = 0
     for entry in entries:
+        a = Decimal(entry['a'])
         if entry['e_type'] == 'dr':
-            dr += int(entry['a'])
+            dr += a
         elif entry['e_type'] == 'cr':
-            cr += int(entry['a'])
+            cr += a
 
     if dr == cr:
         return (1, dr, cr, dr-cr)
@@ -94,14 +97,23 @@ def save_session_entries(request):
                 e_type = entry['e_type']
                 counter += 1
 
-                entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a, entry_type=e_type, symbol_number=sn, entry_bundle=entrybundle, count=counter)
-                entry.save()
-
+                entry = Entry(main_account=ma, secondary_account=sa, personal_account=pa, amount=a,
+                        entry_type=e_type, symbol_number=sn, entry_bundle=entrybundle, count=counter)
+                try:
+                    entry.full_clean()
+                    entry.save()
+                except ValidationError as e:
+                    entry_bundle = EntryBundle.objects.latest('date_created')
+                    entry_bundle.delete()
+                    print(e.message_dict)
+                    del request.session['entries']
+                    del request.session['entries_counter']
+                    return HttpResponse('validation_error', status=400)
             del request.session['entries']
             del request.session['entries_counter']
             return HttpResponse('reload')
         elif drcr_balance_check_val[0] == -1:
-            return HttpResponse(status=400)
+            return HttpResponse('dr_cr_unbalanced', status=400)
 
     return HttpResponse('')
 
