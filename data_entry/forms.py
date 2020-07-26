@@ -11,6 +11,7 @@ class DataEntryForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['secondary_account'].queryset = SecondaryAccount.objects.none()
+        self.fields['amount'].widget.attrs['min'] = 0.01
 
         if 'main_account' in self.data:
             try:

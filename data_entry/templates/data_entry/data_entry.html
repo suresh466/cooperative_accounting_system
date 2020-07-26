@@ -150,7 +150,13 @@ $(document).ready(function(){
 				}
 			},
 			error:function(data){
-				alert("Please check the difference between debit and credit balance before submitting. It should be 0")
+				if(data.responseText === "validation_error"){
+					alert("Data entered is not valid. Please try again")
+					location.reload()
+				}
+				else if(data.responseText === "dr_cr_unbalanced"){
+					alert("Please check the difference between debit and credit balance before submitting. It should be 0")
+				}
 			}
 		});
 	});
